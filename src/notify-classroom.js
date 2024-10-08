@@ -2,7 +2,7 @@ const core = require("@actions/core");
 const github = require("@actions/github");
 
 exports.NotifyClassroom = async function NotifyClassroom(totalPoints, maxPoints) {
-
+  console.log("Starting NotifyClassroom");
   // The action needs an API access to the repository so we require a token
   const token = process.env.GITHUB_TOKEN || core.getInput("token");
   if (!token || token === "") {
