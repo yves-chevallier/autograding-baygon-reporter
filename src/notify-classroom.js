@@ -51,7 +51,8 @@ exports.NotifyClassroom = async function NotifyClassroom(totalPoints, maxPoints)
   });
 
   console.log(`Check Runs Response: ${checkRunsResponse.data}`);
-
+  console.log(`Check Runs Response: ${checkRunsResponse.data.total_count}`);
+  console.log(`Check Runs Response: ${checkRunsResponse.data.check_runs[0]}`);
   // Filter to find the check run named "Autograding Tests" for the specific workflow run ID
   const checkRun = checkRunsResponse.data.total_count === 1 && checkRunsResponse.data.check_runs[0];
 
