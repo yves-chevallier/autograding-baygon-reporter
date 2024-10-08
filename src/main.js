@@ -5,7 +5,7 @@ async function run() {
     try {
         const webhookUrl = core.getInput('webhook_url');
 
-        console.log(`Sending notification to ${webhookUrl}`);
+        core.info(`Sending notification to ${webhookUrl}`);
 
         NotifyClassroom(10, 50);
 
