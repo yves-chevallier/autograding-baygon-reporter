@@ -1,44 +1,35 @@
 const core = require("@actions/core");
 const github = require("@actions/github");
 
-exports.NotifyClassroom = async function NotifyClassroom(runnerResults) {
-  // combine max score and total score from each {runner, results} pair
-  // if max_score is greater than 0 run the rest of this code
-  const { totalPoints, maxPoints } = runnerResults.reduce(
-    (acc, { results }) => {
-      if (!results.max_score) return acc;
+exports.NotifyClassroom = async function NotifyClassroom(totalPoints, maxPoints) {
 
-      acc.maxPoints += results.max_score;
-      results.tests.forEach(({ score }) => {
-        acc.totalPoints += score;
-      });
-
-      return acc;
-    },
-    { totalPoints: 0, maxPoints: 0 }
-  );
-  if (!maxPoints) return;
-
-  // Our action will need to API access the repository so we require a token
-  // This will need to be set in the calling workflow, otherwise we'll exit
+  // The action needs an API access to the repository so we require a token
   const token = process.env.GITHUB_TOKEN || core.getInput("token");
-  if (!token || token === "") return;
+  if (!token || token === "") {
+    console.log("No token provided");
+    return;
+  }
 
   // Create the octokit client
   const octokit = github.getOctokit(token);
-  if (!octokit) return;
+  if (!octokit) {
+    console.log("Failed to create octokit client");
+    return;
+  }
 
-  // The environment contains a variable for current repository. The repository
-  // will be formatted as a name with owner (`nwo`); e.g., jeffrafter/example
-  // We'll split this into two separate variables for later use
   const nwo = process.env.GITHUB_REPOSITORY || "/";
   const [owner, repo] = nwo.split("/");
-  if (!owner) return;
-  if (!repo) return;
+  if (!owner || !repo) {
+    console.log("Failed to get owner or repo");
+    return;
+  }
 
-  // We need the workflow run id
+  // Get the run ID
   const runId = parseInt(process.env.GITHUB_RUN_ID || "");
-  if (Number.isNaN(runId)) return;
+  if (Number.isNaN(runId)) {
+    console.log("Failed to get run ID");
+    return;
+  }
 
   // Fetch the workflow run
   const workflowRunResponse = await octokit.rest.actions.getWorkflowRun({
@@ -62,11 +53,11 @@ exports.NotifyClassroom = async function NotifyClassroom(runnerResults) {
   // Filter to find the check run named "Autograding Tests" for the specific workflow run ID
   const checkRun = checkRunsResponse.data.total_count === 1 && checkRunsResponse.data.check_runs[0];
 
-  if (!checkRun) return;
+  if (!checkRun) {
+    console.log("No check run named 'Autograding Tests' found");
+    return;
+  }
 
-  // Update the checkrun, we'll assign the title, summary and text even though we expect
-  // the title and summary to be overwritten by GitHub Actions (they are required in this call)
-  // We'll also store the total in an annotation to future-proof
   const text = `Points ${totalPoints}/${maxPoints}`;
   await octokit.rest.checks.update({
     owner,
